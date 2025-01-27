@@ -2,12 +2,19 @@ package com.o3.server;
 import com.sun.net.httpserver.*;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
 import java.util.stream.Collectors;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.TrustManagerFactory;
 
 
 public class Server implements HttpHandler {
@@ -48,13 +55,45 @@ public class Server implements HttpHandler {
 		}
     }
 
+	private static SSLContext serverSSLContext() throws Exception {
+	char[] passphrase = "Jonio1".toCharArray();
+	KeyStore ks = KeyStore.getInstance("JKS");
+	ks.load(new FileInputStream("keystore.jks"), passphrase);
+
+	KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+	kmf.init(ks, passphrase);
+
+	TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+	tmf.init(ks);
+
+	SSLContext ssl = SSLContext.getInstance("TLS");
+	ssl.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+	return ssl;
+	}
+
     public static void main(String[] args) throws Exception {
-        //create the http server to port 8001 with default logger
-        HttpServer server = HttpServer.create(new InetSocketAddress(8001),0);
-        //create context that defines path for the resource, in this case a "help"
-        server.createContext("/datarecord", new Server());
-        // creates a default executor
-        server.setExecutor(null); 
-        server.start(); 
+		try {
+		HttpsServer server = HttpsServer.create(new InetSocketAddress(8001),0);
+        SSLContext sslContext = serverSSLContext();
+		server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
+			public void configure (HttpsParameters params) {
+				InetSocketAddress remote = params.getClientAddress();
+				SSLContext c = getSSLContext();
+				SSLParameters sslparams = c.getDefaultSSLParameters();
+				params.setSSLParameters(sslparams);
+ 			}
+		});
+
+		UserAuthenticator userAuth = new UserAuthenticator();
+		HttpContext context = server.createContext("/datarecord", new Server());
+		server.createContext("/registration", new RegistrationHandler(userAuth));
+		context.setAuthenticator(userAuth);
+
+		server.setExecutor(null); 
+        server.start();
+
+		} catch (Exception e){
+			e.printStackTrace();
+		}
     }
 }
