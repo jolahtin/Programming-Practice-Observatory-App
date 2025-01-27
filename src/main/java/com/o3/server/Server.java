@@ -56,9 +56,9 @@ public class Server implements HttpHandler {
     }
 
 	private static SSLContext serverSSLContext() throws Exception {
-	char[] passphrase = "Jonio1".toCharArray();
+	char[] passphrase = args[1].toCharArray();
 	KeyStore ks = KeyStore.getInstance("JKS");
-	ks.load(new FileInputStream(args[0]), args[1]);
+	ks.load(new FileInputStream(args[0]), passphrase);
 
 	KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 	kmf.init(ks, passphrase);
