@@ -55,20 +55,20 @@ public class Server implements HttpHandler {
 		}
     }
 
-	private static SSLContext serverSSLContext(String [] args) throws Exception {
-	char[] passphrase = args[1].toCharArray();
-	KeyStore ks = KeyStore.getInstance("JKS");
-	ks.load(new FileInputStream(args[0]), passphrase);
+	private static SSLContext serverSSLContext(String[] args) throws Exception {
+		char[] passphrase = args[1].toCharArray();
+		KeyStore ks = KeyStore.getInstance("JKS");
+		ks.load(new FileInputStream(args[0]), passphrase);
+	
+		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+		kmf.init(ks, passphrase);
 
-	KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-	kmf.init(ks, passphrase);
+		TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+		tmf.init(ks);
 
-	TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-	tmf.init(ks);
-
-	SSLContext ssl = SSLContext.getInstance("TLS");
-	ssl.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-	return ssl;
+		SSLContext ssl = SSLContext.getInstance("TLS");
+		ssl.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+		return ssl;
 	}
 
     public static void main(String[] args) throws Exception {
