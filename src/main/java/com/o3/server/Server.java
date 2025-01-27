@@ -55,7 +55,7 @@ public class Server implements HttpHandler {
 		}
     }
 
-	private static SSLContext serverSSLContext() throws Exception {
+	private static SSLContext serverSSLContext(String [] args) throws Exception {
 	char[] passphrase = args[1].toCharArray();
 	KeyStore ks = KeyStore.getInstance("JKS");
 	ks.load(new FileInputStream(args[0]), passphrase);
@@ -74,7 +74,7 @@ public class Server implements HttpHandler {
     public static void main(String[] args) throws Exception {
 		try {
 		HttpsServer server = HttpsServer.create(new InetSocketAddress(8001),0);
-        SSLContext sslContext = serverSSLContext();
+        SSLContext sslContext = serverSSLContext(args);
 		server.setHttpsConfigurator (new HttpsConfigurator(sslContext) {
 			public void configure (HttpsParameters params) {
 				InetSocketAddress remote = params.getClientAddress();
