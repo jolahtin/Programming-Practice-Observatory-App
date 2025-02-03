@@ -1,31 +1,45 @@
 package com.o3.server;
 
-import java.util.Hashtable;
-import java.util.Map;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class UserAuthenticator extends com.sun.net.httpserver.BasicAuthenticator {
 
-    private Map<String, String> users = null;
+    private JSONArray users = null;
 
     public UserAuthenticator(){
         super("datarecord");
-        users = new Hashtable<String,String>();
-        users.put("dummy", "passwd");
+        users = new JSONArray();
+        JSONObject dummy = new JSONObject();
+        dummy.put("name", "dummy");
+        dummy.put("password", "passwd");
+        dummy.put("email", "dummy@email.com");
+        users.put(dummy);
     }
 
     @Override
     public boolean checkCredentials(String username, String password) {
-        if(users.get(username).equals(password)){
-            return true;
+        for(int i=0; i<users.length(); i++){
+            if(users.getJSONObject(i).getString("name").equals(username)){
+                if(users.getJSONObject(i).getString("password").equals(password)){
+                    return true;
+                }
+            }
         }
         return false;
     }
 
-    public boolean addUser(String username, String password){
-        if(users.containsKey(username)){
-            return false;
+    public boolean addUser(String username, String password, String email){
+        for(int i=0; i<users.length(); i++){
+            if(users.getJSONObject(i).getString("name").equals(username)){
+                return false;
+            }
         }
-        users.put(username, password);
+        JSONObject user = new JSONObject();
+        user.put("name", username);
+        user.put("password", password);
+        user.put("email", email);
+        users.put(user);
         return true;
     }
 

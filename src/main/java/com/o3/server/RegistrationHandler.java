@@ -6,6 +6,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
+
+import org.json.JSONObject;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -22,17 +25,20 @@ public class RegistrationHandler implements HttpHandler {
 
 		if (t.getRequestMethod().equalsIgnoreCase("POST")) {
         	String text = new BufferedReader(new InputStreamReader(t.getRequestBody(),StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
-            if(text.contains(":")){
-                String[] usepass = text.split(":");
-                if(myAuth.addUser(usepass[0], usepass[1])){
+            if(!t.getRequestHeaders().get("Content-Type").get(0).equalsIgnoreCase("application/json")){
+                respond(t, "Missing Content-Type", 411);
+            }
+            JSONObject user = new JSONObject(text);
+            if(jsonCheck(user)){
+                if(myAuth.addUser(user.getString("username"), user.getString("password"), user.getString("email"))){
                     respond(t, "OK", 200);
                 } else{
                     respond(t, "Ineligible Username", 403);
                 }
-            } else {
-                respond(t, "Invalid Username and Password format", 400);
+            } else{
+                respond(t, "Invalid format", 410);
             }
-		} else {
+        } else {
 			respond(t, "Not Supported", 400);
 		}
     }
@@ -44,6 +50,13 @@ public class RegistrationHandler implements HttpHandler {
 		output.write(response.getBytes());
         output.flush();
 		output.close();
+    }
+
+    private boolean jsonCheck(JSONObject user){
+        if(user.has("username") && user.has("password") && user.has("email")){
+            return true;
+        }
+        return false;
     }
 
 }
