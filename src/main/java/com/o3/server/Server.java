@@ -9,7 +9,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -22,8 +22,6 @@ import org.json.JSONObject;
 
 
 public class Server implements HttpHandler {
-
-	private ArrayList<ObservationRecord> records = new ArrayList<ObservationRecord>();
 
     private Server() {
     }
@@ -50,12 +48,7 @@ public class Server implements HttpHandler {
 			}
 
 		} else if (t.getRequestMethod().equalsIgnoreCase("GET")) {
-			if (records.isEmpty()){
-				t.sendResponseHeaders(204, -1);
-			} else {
-				sendJSONRecords(t);
-			}
-			
+			sendJSONRecords(t);
 		} else {
 			respond(t, "Not Supported", 400);
 		}
@@ -65,7 +58,7 @@ public class Server implements HttpHandler {
 		char[] passphrase = args[1].toCharArray();
 		KeyStore ks = KeyStore.getInstance("JKS");
 		ks.load(new FileInputStream(args[0]), passphrase);
-	
+		
 		KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
 		kmf.init(ks, passphrase);
 
@@ -84,7 +77,12 @@ public class Server implements HttpHandler {
 		record.setRecordPayload(input.getString("recordPayload"));
 		record.setRecordRightAscension(input.getString("recordRightAscension"));
 		record.setRecordDeclination(input.getString("recordDeclination"));
-		records.add(record);
+		record.setRecordTime();
+		try {
+			MessageDatabase.getInstance().insertMessage(record);
+		} catch (SQLException e) {
+			System.out.println("Couldn't insert message to database!");
+		}
 	}
 
 	private boolean recordCheck(JSONObject record){ 
@@ -95,24 +93,18 @@ public class Server implements HttpHandler {
 				return true;
 			}
         }
-		System.out.println(record.toString());
         return false;
     }
 
 	private void sendJSONRecords(HttpExchange t) throws IOException{
-		if(records.isEmpty()){
-			return;
-		}
-
 		JSONArray jsonrecords = new JSONArray();
-		
-		for(int i = 0; i < records.size(); i++){
-			JSONObject jsonrecord = new JSONObject(records.get(i));
-			jsonrecords.put(jsonrecord);
+		try {
+			jsonrecords = MessageDatabase.getInstance().getMessages();
+			String output = jsonrecords.toString();
+			respond(t, output, 201);
+		} catch (SQLException e) {
+			respond(t, "couldn't get records", 500);
 		}
-		
-		String output = jsonrecords.toString();
-		respond(t, output, 201);
 	}
 
     private void respond(HttpExchange t, String response, int code) throws IOException{
