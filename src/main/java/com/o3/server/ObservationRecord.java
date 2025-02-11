@@ -1,11 +1,8 @@
 package com.o3.server;
 
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.time.Instant;
 
 public class ObservationRecord {
 
@@ -59,15 +56,8 @@ public class ObservationRecord {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMdd'T'HH:mm:ss.SSSX");
         this.recordTime = now.format(formatter); 
     }
-    public long dateAsLong(){
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMdd'T'HH:mm:ss.SSSX");
-        Date date = (Date) formatter.parse(recordTime);
-        return date.getTime();
-    }
-    public void setLongTime(long epoch){
-        ZonedDateTime date = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneOffset.UTC);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMdd'T'HH:mm:ss.SSSX");
-        this.recordTime = date.format(formatter); 
+    public void fetchRecordTime(String time){
+        this.recordTime = time;
     }
 
 }

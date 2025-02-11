@@ -3,6 +3,7 @@ package com.o3.server;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -37,7 +38,7 @@ public class MessageDatabase {
     private boolean newdb() throws SQLException{
         if (dbConnection != null){
             String createUserDB = "create table users (user varchar(25) NOT NULL PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL)";
-            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTime num(20) NOT NULL)";
+            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTime varchar(25) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
             createStatement.executeUpdate(createMessageDB);
@@ -83,7 +84,7 @@ public class MessageDatabase {
             record.setRecordPayload(results.getString("recordPayload"));
             record.setRecordRightAscension(results.getString("recordRightAscension"));
             record.setRecordDeclination(results.getString("recordDeclination"));
-            record.setLongTime(results.getLong("recordTime"));
+            record.fetchRecordTime(results.getString("recordTime"));
             records.put(record);
         }
         queryStatement.close();
@@ -97,11 +98,11 @@ public class MessageDatabase {
         record.getRecordPayload() + "', '" +
         record.getRecordRightAscension() + "', '" +
         record.getRecordDeclination() + "', '" + 
-        record.dateAsLong() + "')";
-        System.out.println(insertString);
-        Statement inserStatement = dbConnection.createStatement();
-        inserStatement.executeUpdate(insertString);
-        inserStatement.close();
+        record.getRecordTime() + "')";
+        System.out.println(insertString.toString());
+        Statement insertStatement = dbConnection.createStatement();
+        insertStatement.executeUpdate(insertString.toString());
+        insertStatement.close();
     }
 
     public boolean login(String username, String password) throws SQLException{
@@ -122,9 +123,9 @@ public class MessageDatabase {
         password + "', '" +
         email + "')";
         
-        Statement inserStatement = dbConnection.createStatement();
-        inserStatement.executeUpdate(insertString);
-        inserStatement.close();
+        Statement insertStatement = dbConnection.createStatement();
+        insertStatement.executeUpdate(insertString);
+        insertStatement.close();
     }
 
 
