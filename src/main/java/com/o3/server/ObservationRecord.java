@@ -11,7 +11,7 @@ public class ObservationRecord {
     private String recordPayload;
     private String recordRightAscension;
     private String recordDeclination;
-    private String recordTime;
+    private String recordTimeReceived;
 
     public String getRecordIdentifier() {
         return recordIdentifier;
@@ -49,15 +49,15 @@ public class ObservationRecord {
     }
 
     public String getRecordTime(){
-        return recordTime;
+        return recordTimeReceived;
     }
     public void setRecordTime(){
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMdd'T'HH:mm:ss.SSSX");
-        this.recordTime = now.format(formatter); 
+        this.recordTimeReceived = now.format(formatter); 
     }
     public void fetchRecordTime(String time){
-        this.recordTime = time;
+        this.recordTimeReceived = time;
     }
 
 }

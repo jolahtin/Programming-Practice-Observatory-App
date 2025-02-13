@@ -74,7 +74,7 @@ public class MessageDatabase {
         ObservationRecord record = new ObservationRecord();
         Statement queryStatement = null;
 
-        String statementString = "SELECT recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTime FROM messages";
+        String statementString = "SELECT recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived FROM messages";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
 
@@ -84,25 +84,25 @@ public class MessageDatabase {
             record.setRecordPayload(results.getString("recordPayload"));
             record.setRecordRightAscension(results.getString("recordRightAscension"));
             record.setRecordDeclination(results.getString("recordDeclination"));
-            record.fetchRecordTime(results.getString("recordTime"));
-            records.put(record);
+            record.fetchRecordTime(results.getString("recordTimeReceived"));
+            System.out.println(record.toString());
         }
         queryStatement.close();
         return records;
     }
 
-    public void insertMessage(ObservationRecord record) throws SQLException{
-        String insertString = "INSERT INTO messages VALUES('" + 
-        record.getRecordIdentifier() + "', '" +
-        record.getRecordDescription() + "', '" +
-        record.getRecordPayload() + "', '" +
-        record.getRecordRightAscension() + "', '" +
-        record.getRecordDeclination() + "', '" + 
-        record.getRecordTime() + "')";
-        System.out.println(insertString.toString());
-        Statement insertStatement = dbConnection.createStatement();
-        insertStatement.executeUpdate(insertString.toString());
-        insertStatement.close();
+    public void insertMessage(ObservationRecord record) throws SQLException {
+        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived) " +
+                              "VALUES (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement insertStatement = dbConnection.prepareStatement(insertString)) {
+            insertStatement.setString(1, record.getRecordIdentifier());
+            insertStatement.setString(2, record.getRecordDescription());
+            insertStatement.setString(3, record.getRecordPayload());
+            insertStatement.setString(4, record.getRecordRightAscension());
+            insertStatement.setString(5, record.getRecordDeclination());
+            insertStatement.setString(6, record.getRecordTime());
+            insertStatement.executeUpdate();
+        }
     }
 
     public boolean login(String username, String password) throws SQLException{
