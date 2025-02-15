@@ -94,7 +94,8 @@ public class MessageDatabase {
     public void insertMessage(ObservationRecord record) throws SQLException {
         String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived) " +
                               "VALUES (?, ?, ?, ?, ?, ?)";
-        try (PreparedStatement insertStatement = dbConnection.prepareStatement(insertString)) {
+        try {
+            PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, record.getRecordIdentifier());
             insertStatement.setString(2, record.getRecordDescription());
             insertStatement.setString(3, record.getRecordPayload());
@@ -102,6 +103,8 @@ public class MessageDatabase {
             insertStatement.setString(5, record.getRecordDeclination());
             insertStatement.setString(6, record.getRecordTime());
             insertStatement.executeUpdate();
+        } catch(Exception e){
+            System.out.println("Failed to insert message:");
         }
     }
 
