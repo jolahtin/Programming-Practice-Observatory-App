@@ -83,7 +83,7 @@ public class MessageDatabase {
             record.setRecordPayload(results.getString("recordPayload"));
             record.setRecordRightAscension(results.getString("recordRightAscension"));
             record.setRecordDeclination(results.getString("recordDeclination"));
-            record.fetchRecordTime(results.getString("recordTimeReceived"));
+            record.fetchRecordTimeReceived(results.getString("recordTimeReceived"));
             records.add(record);
         }
         queryStatement.close();
@@ -100,7 +100,7 @@ public class MessageDatabase {
             insertStatement.setString(3, record.getRecordPayload());
             insertStatement.setString(4, record.getRecordRightAscension());
             insertStatement.setString(5, record.getRecordDeclination());
-            insertStatement.setString(6, record.getRecordTime());
+            insertStatement.setString(6, record.getRecordTimeReceived());
             insertStatement.executeUpdate();
             insertStatement.close();
         } catch(Exception e){

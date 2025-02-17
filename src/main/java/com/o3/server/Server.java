@@ -78,7 +78,7 @@ public class Server implements HttpHandler {
 		record.setRecordPayload(input.getString("recordPayload"));
 		record.setRecordRightAscension(input.getString("recordRightAscension"));
 		record.setRecordDeclination(input.getString("recordDeclination"));
-		record.setRecordTime();
+		record.setRecordTimeReceived();
 		try {
 			MessageDatabase.getInstance().insertMessage(record);
 		} catch (SQLException e) {
@@ -105,10 +105,8 @@ public class Server implements HttpHandler {
 			for(int i=0;i<observationRecords.size();i++){
 				JSONObject recordObject = new JSONObject(observationRecords.get(i));
 				jsonRecords.put(recordObject);
-				System.out.println(recordObject.toString());
 			}
 			String output = jsonRecords.toString();
-			System.out.println(jsonRecords.toString());
 			respond(t, output, 201);
 		} catch (SQLException e) {
 			respond(t, "couldn't get records", 500);

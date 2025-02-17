@@ -48,15 +48,15 @@ public class ObservationRecord {
         this.recordRightAscension = recordRightAscension;
     }
 
-    public String getRecordTime(){
+    public String getRecordTimeReceived(){
         return recordTimeReceived;
     }
-    public void setRecordTime(){
+    public void setRecordTimeReceived(){
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MMdd'T'HH:mm:ss.SSSX");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
         this.recordTimeReceived = now.format(formatter); 
     }
-    public void fetchRecordTime(String time){
+    public void fetchRecordTimeReceived(String time){
         this.recordTimeReceived = time;
     }
 
