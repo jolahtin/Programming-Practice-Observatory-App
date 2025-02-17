@@ -7,8 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import org.json.JSONArray;
+import java.util.ArrayList;
 
 public class MessageDatabase {
 
@@ -38,7 +37,7 @@ public class MessageDatabase {
     private boolean newdb() throws SQLException{
         if (dbConnection != null){
             String createUserDB = "create table users (user varchar(25) NOT NULL PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL)";
-            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTime varchar(25) NOT NULL)";
+            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
             createStatement.executeUpdate(createMessageDB);
@@ -69,8 +68,8 @@ public class MessageDatabase {
         }
     }
 
-    public JSONArray getMessages() throws SQLException{
-        JSONArray records = new JSONArray();
+    public ArrayList<ObservationRecord> getMessages() throws SQLException{
+        ArrayList<ObservationRecord> records = new ArrayList<ObservationRecord>();
         ObservationRecord record = new ObservationRecord();
         Statement queryStatement = null;
 
@@ -85,7 +84,7 @@ public class MessageDatabase {
             record.setRecordRightAscension(results.getString("recordRightAscension"));
             record.setRecordDeclination(results.getString("recordDeclination"));
             record.fetchRecordTime(results.getString("recordTimeReceived"));
-            System.out.println(record.toString());
+            records.add(record);
         }
         queryStatement.close();
         return records;
@@ -103,6 +102,7 @@ public class MessageDatabase {
             insertStatement.setString(5, record.getRecordDeclination());
             insertStatement.setString(6, record.getRecordTime());
             insertStatement.executeUpdate();
+            insertStatement.close();
         } catch(Exception e){
             System.out.println("Failed to insert message:");
         }

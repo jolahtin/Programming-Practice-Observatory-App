@@ -10,6 +10,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -97,10 +98,17 @@ public class Server implements HttpHandler {
     }
 
 	private void sendJSONRecords(HttpExchange t) throws IOException{
-		JSONArray jsonrecords = new JSONArray();
+		ArrayList<ObservationRecord> observationRecords = new ArrayList<ObservationRecord>();
+		JSONArray jsonRecords = new JSONArray();
 		try {
-			jsonrecords = MessageDatabase.getInstance().getMessages();
-			String output = jsonrecords.toString();
+			observationRecords = MessageDatabase.getInstance().getMessages();
+			for(int i=0;i<observationRecords.size();i++){
+				JSONObject recordObject = new JSONObject(observationRecords.get(i));
+				jsonRecords.put(recordObject);
+				System.out.println(recordObject.toString());
+			}
+			String output = jsonRecords.toString();
+			System.out.println(jsonRecords.toString());
 			respond(t, output, 201);
 		} catch (SQLException e) {
 			respond(t, "couldn't get records", 500);
