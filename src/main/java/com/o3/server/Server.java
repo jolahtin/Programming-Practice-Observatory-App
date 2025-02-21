@@ -81,7 +81,9 @@ public class Server implements HttpHandler {
 		record.setRecordRightAscension(input.getString("recordRightAscension"));
 		record.setRecordDeclination(input.getString("recordDeclination"));
 		record.setRecordOwner(input.getString("recordOwner"));
-		record.setObservatory(buildObservatory(input));
+		if (input.has("Observatory")){
+			record.setObservatory(buildObservatory(input));
+		}
 		record.setRecordTimeReceived();
 		try {
 			MessageDatabase.getInstance().insertMessage(record);

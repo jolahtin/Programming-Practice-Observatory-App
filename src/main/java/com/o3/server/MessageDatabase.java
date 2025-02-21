@@ -138,10 +138,10 @@ public class MessageDatabase {
     public String getNickname(String username) throws SQLException{
         Statement queryStatement = null;
 
-        String statementString = "SELECT nick WHERE user='" + username + "'";
+        String statementString = "SELECT nick FROM users WHERE user='" + username + "'";
         queryStatement = dbConnection.createStatement();
         ResultSet result = queryStatement.executeQuery(statementString);
-        String nickname = result.getString(0);
+        String nickname = result.getString(1);
         return nickname;
     }
 
