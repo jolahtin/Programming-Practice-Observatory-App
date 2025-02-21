@@ -20,9 +20,9 @@ public class UserAuthenticator extends com.sun.net.httpserver.BasicAuthenticator
         return false;
     }
 
-    public boolean addUser(String username, String password, String email){
+    public boolean addUser(String username, String password, String email, String nick){
         try {
-            MessageDatabase.getInstance().addUser(username, password, email);
+            MessageDatabase.getInstance().addUser(username, password, email, nick);
             return true;
         } catch (SQLException e) {
             return false;

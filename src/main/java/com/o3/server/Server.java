@@ -19,6 +19,7 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.TrustManagerFactory;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -38,6 +39,7 @@ public class Server implements HttpHandler {
 				try{
 				JSONObject input = new JSONObject(text.toString());
 				if (recordCheck(input)){
+					checkUsername(t, input);
 					storeRecord(input);
 					respond(t, "OK", 200);
 				} else {
@@ -78,6 +80,8 @@ public class Server implements HttpHandler {
 		record.setRecordPayload(input.getString("recordPayload"));
 		record.setRecordRightAscension(input.getString("recordRightAscension"));
 		record.setRecordDeclination(input.getString("recordDeclination"));
+		record.setRecordOwner(input.getString("recordOwner"));
+		record.setObservatory(buildObservatory(input));
 		record.setRecordTimeReceived();
 		try {
 			MessageDatabase.getInstance().insertMessage(record);
@@ -111,6 +115,31 @@ public class Server implements HttpHandler {
 		} catch (SQLException e) {
 			respond(t, "couldn't get records", 500);
 		}
+	}
+
+	private void checkUsername(HttpExchange t, JSONObject input){
+		if(input.has("recordOwner")){
+			return;
+		} else{
+			try {
+				input.put("recordOwner", (MessageDatabase.getInstance().getNickname(t.getPrincipal().getUsername())));
+			} catch (JSONException e) {
+				System.out.println("error handling JSON in checkUsername");
+				e.printStackTrace();
+			} catch (SQLException e) {
+				System.out.println("error handling SQL in checkUsername");
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private Observatory buildObservatory(JSONObject input){
+		Observatory observatory = new Observatory();
+		JSONObject observatoryJSON = new JSONObject(input.getString("Observatory"));
+		observatory.setObservatoryName(observatoryJSON.getString("observatoryName"));
+		observatory.setLatitude(observatoryJSON.getString("latitude"));
+		observatory.setLongitude(observatoryJSON.getString("longitude"));
+		return observatory;
 	}
 
     private void respond(HttpExchange t, String response, int code) throws IOException{

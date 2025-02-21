@@ -30,7 +30,7 @@ public class RegistrationHandler implements HttpHandler {
             }
             JSONObject user = new JSONObject(text);
             if(jsonCheck(user)){
-                if(myAuth.addUser(user.getString("username"), user.getString("password"), user.getString("email"))){
+                if(myAuth.addUser(user.getString("username"), user.getString("password"), user.getString("email"), user.getString("userNickname"))){
                     respond(t, "OK", 200);
                 } else{
                     respond(t, "Ineligible Username", 403);
@@ -53,7 +53,7 @@ public class RegistrationHandler implements HttpHandler {
     }
 
     private boolean jsonCheck(JSONObject user){
-        if(user.has("username") && user.has("password") && user.has("email")){
+        if(user.has("username") && user.has("password") && user.has("email") && user.has("userNickname")){
             return true;
         }
         return false;

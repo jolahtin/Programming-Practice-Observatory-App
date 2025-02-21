@@ -12,6 +12,8 @@ public class ObservationRecord {
     private String recordRightAscension;
     private String recordDeclination;
     private String recordTimeReceived;
+    private String recordOwner;
+    private Observatory observatory = null;
 
     public String getRecordIdentifier() {
         return recordIdentifier;
@@ -58,6 +60,20 @@ public class ObservationRecord {
     }
     public void fetchRecordTimeReceived(String time){
         this.recordTimeReceived = time;
+    }
+
+    public void setRecordOwner(String recordOwner) {
+        this.recordOwner = recordOwner;
+    }
+    public String getRecordOwner() {
+        return recordOwner;
+    }
+
+    public Observatory getObservatory() {
+        return observatory;
+    }
+    public void setObservatory(Observatory observatory) {
+        this.observatory = observatory;
     }
 
 }

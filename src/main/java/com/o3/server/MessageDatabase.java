@@ -36,11 +36,13 @@ public class MessageDatabase {
 
     private boolean newdb() throws SQLException{
         if (dbConnection != null){
-            String createUserDB = "create table users (user varchar(25) NOT NULL PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL)";
-            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL)";
+            String createUserDB = "create table users (user varchar(25) NOT NULL PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
+            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, observatory INTEGER(64), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID))";
+            String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude varchar(20) NOT NULL, longitude varchar(20) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
             createStatement.executeUpdate(createMessageDB);
+            createStatement.executeUpdate(createObservatoryDB);
             createStatement.close();
             return true;
         }
@@ -73,7 +75,7 @@ public class MessageDatabase {
         ObservationRecord record = new ObservationRecord();
         Statement queryStatement = null;
 
-        String statementString = "SELECT recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived FROM messages";
+        String statementString = "SELECT recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory FROM messages";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
 
@@ -84,6 +86,10 @@ public class MessageDatabase {
             record.setRecordRightAscension(results.getString("recordRightAscension"));
             record.setRecordDeclination(results.getString("recordDeclination"));
             record.fetchRecordTimeReceived(results.getString("recordTimeReceived"));
+            record.setRecordOwner(results.getString("recordOwner"));
+            if (results.getString("observatory") != null){
+                record.setObservatory(getObservatory(results.getString("observatory")));
+            }
             records.add(record);
         }
         queryStatement.close();
@@ -91,8 +97,8 @@ public class MessageDatabase {
     }
 
     public void insertMessage(ObservationRecord record) throws SQLException {
-        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived) " +
-                              "VALUES (?, ?, ?, ?, ?, ?)";
+        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try {
             PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, record.getRecordIdentifier());
@@ -101,6 +107,15 @@ public class MessageDatabase {
             insertStatement.setString(4, record.getRecordRightAscension());
             insertStatement.setString(5, record.getRecordDeclination());
             insertStatement.setString(6, record.getRecordTimeReceived());
+            insertStatement.setString(7, record.getRecordOwner());
+            if (record.getObservatory() != null){
+                String observatoryId = checkObservatory(record.getObservatory());
+                if(observatoryId == null){
+                    addObservatory(record.getObservatory());
+                    observatoryId = checkObservatory(record.getObservatory());
+                }
+                insertStatement.setString(8, observatoryId);
+            } else {insertStatement.setString(8, null);};
             insertStatement.executeUpdate();
             insertStatement.close();
         } catch(Exception e){
@@ -120,11 +135,68 @@ public class MessageDatabase {
         return false;
     }
 
-    public void addUser(String username, String password, String email) throws SQLException{
+    public String getNickname(String username) throws SQLException{
+        Statement queryStatement = null;
+
+        String statementString = "SELECT nick WHERE user='" + username + "'";
+        queryStatement = dbConnection.createStatement();
+        ResultSet result = queryStatement.executeQuery(statementString);
+        String nickname = result.getString(0);
+        return nickname;
+    }
+
+    public void addObservatory(Observatory observatory) throws SQLException{
+        String insertString = "INSERT INTO observatory (observatoryName, longitude, latitude)" +
+        "VALUES (?, ?, ?)";
+        try{
+            PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
+            insertStatement.setString(1, observatory.getObservatoryName());
+            insertStatement.setString(2, observatory.getLongitude());
+            insertStatement.setString(3, observatory.getLatitude());
+            insertStatement.executeUpdate();
+            insertStatement.close();
+        } 
+        catch (Exception e){
+            System.out.println("failed to save observatory to database");
+        }
+    }
+
+    private String checkObservatory(Observatory observatory){
+        Statement queryStatement = null;
+        try{
+        String statementString = "SELECT observatoryID FROM observatory WHERE observatoryName = '" + observatory.getObservatoryName() +"', " +
+                                "longitude = '" + observatory.getLongitude() +"', " +
+                                "latitude = '" + observatory.getLatitude() +"'";
+        queryStatement = dbConnection.createStatement();
+        ResultSet results = queryStatement.executeQuery(statementString);
+        queryStatement.close();
+        return results.getString(0);
+        } catch(Exception e){
+        System.out.println("No observatory found");
+        }
+        return null;
+    }
+
+    private Observatory getObservatory(String id) throws SQLException{
+        Statement queryStatement = null;
+        Observatory newObservatory = new Observatory();
+
+        String statementString = "SELECT observatoryName, longitude, latitude FROM observatory WHERE observatoryID = '" + id +"'";
+        queryStatement = dbConnection.createStatement();
+        ResultSet results = queryStatement.executeQuery(statementString);
+        newObservatory.setObservatoryName(results.getString("observatoryName"));
+        newObservatory.setLongitude(results.getString("longitude"));
+        newObservatory.setLatitude(results.getString("latitude"));
+        queryStatement.close();
+        return newObservatory;
+    }
+
+    public void addUser(String username, String password, String email, String nick) throws SQLException{
         String insertString = "INSERT INTO users VALUES('" +
         username + "', '" +
         password + "', '" +
-        email + "')";
+        email + "', '" +
+        nick + "')";
         
         Statement insertStatement = dbConnection.createStatement();
         insertStatement.executeUpdate(insertString);
