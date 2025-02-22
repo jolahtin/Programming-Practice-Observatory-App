@@ -17,7 +17,7 @@ public class MessageDatabase {
 
     private static MessageDatabase dbInstance = null;
     private Connection dbConnection = null;
-    private SecureRandom secure;
+    private SecureRandom secure = new SecureRandom();
 
     public static MessageDatabase getInstance(){
         if (dbInstance == null){
@@ -41,7 +41,7 @@ public class MessageDatabase {
 
     private boolean newdb() throws SQLException{
         if (dbConnection != null){
-            String createUserDB = "create table users (user varchar(25) NOT NULL PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
+            String createUserDB = "create table users (user varchar(25) PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
             String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, observatory INTEGER(64), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID))";
             String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude varchar(20) NOT NULL, longitude varchar(20) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
@@ -128,21 +128,6 @@ public class MessageDatabase {
         }
     }
 
-    public boolean login(String username, String password) throws SQLException{
-        Statement queryStatement = null;
-
-        String statementString = "SELECT user, password FROM users WHERE user='" + username + "'";
-        queryStatement = dbConnection.createStatement();
-        ResultSet results = queryStatement.executeQuery(statementString);
-
-        String dbpass = results.getString("password");
-        password = Crypt.crypt(password, dbpass);
-        if (dbpass.equals(password)){
-            return true;
-        }
-        return false;
-    }
-
     public String getNickname(String username) throws SQLException{
         Statement queryStatement = null;
 
@@ -203,18 +188,29 @@ public class MessageDatabase {
         password = saltPassword(password);
         String insertString = "INSERT INTO users (user, password, email, nick)" +
         "VALUES (?, ?, ?, ?)";
-        try{
-            PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
-            insertStatement.setString(1, username);
-            insertStatement.setString(2, password);
-            insertStatement.setString(3, email);
-            insertStatement.setString(4, nick);
-            insertStatement.executeUpdate();
-            insertStatement.close();
-        } 
-        catch (Exception e){
-            System.out.println("failed to save add user to database");
-        }    }
+        PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
+        insertStatement.setString(1, username);
+        insertStatement.setString(2, password);
+        insertStatement.setString(3, email);
+        insertStatement.setString(4, nick);
+        insertStatement.executeUpdate();
+        insertStatement.close();
+    }
+
+    public boolean login(String username, String password) throws SQLException{
+        Statement queryStatement = null;
+
+        String statementString = "SELECT user, password FROM users WHERE user='" + username + "'";
+        queryStatement = dbConnection.createStatement();
+        ResultSet results = queryStatement.executeQuery(statementString);
+
+        String dbpass = results.getString("password");
+        password = Crypt.crypt(password, dbpass);
+        if (dbpass.equals(password)){
+            return true;
+        }
+        return false;
+    }
 
     private String saltPassword(String password){
         byte bytes[] = new byte[13];
