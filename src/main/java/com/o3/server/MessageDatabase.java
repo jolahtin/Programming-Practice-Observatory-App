@@ -217,6 +217,7 @@ public class MessageDatabase {
         secure.nextBytes(bytes);
         String saltBytes = new String(Base64.getEncoder().encode(bytes));
         String salt = "$6$" + saltBytes;
+        salt.replace('+', 'a');
         
         String hashedPassword = Crypt.crypt(password, salt);
         return hashedPassword;
