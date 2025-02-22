@@ -92,25 +92,34 @@ public class Server implements HttpHandler {
 		}
 	}
 
-	private boolean recordCheck(JSONObject record){ 
-        if(record.has("recordIdentifier") && record.has("recordDescription") && record.has("recordPayload") && record.has("recordRightAscension") && record.has("recordDeclination")){
-			if(record.isNull("recordIdentifier") || record.isNull("recordDescription") || record.isNull("recordPayload") || record.isNull("recordRightAscension") || record.isNull("recordDeclination")){
+	private boolean recordCheck(JSONObject record){
+		String[] fields = {"recordIdentifier", "recordDescription", "recordPayload", "recordRightAscension", "recordDeclination"};
+		for(int i=0; i<fields.length; i++){
+			if(checkJSON(record, fields[i]) == false){
 				return false;
-			} else {
-				if(record.has("Observatory")){
-					if (record.has("longitude") && record.has("latitude") && record.has("observatoryName")){
-						return true;
-					}
-					else {
-						return false;
-					}
-				} else{
-				return true;
+			}
+		}
+		if(record.has("Observatory")){
+			String [] observatoryFields = {"observatoryName", "latitude", "longitude"};
+			for (int i=0; i<observatoryFields.length; i++){
+				if(checkJSON(record, observatoryFields[i]) == false){
+					return false;
 				}
 			}
-        }
-        return false;
+		}
+		return true;
     }
+
+	private boolean checkJSON (JSONObject record, String field){
+		if(record.has(field)){
+			if (record.isNull(field)) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	private void sendJSONRecords(HttpExchange t) throws IOException{
 		ArrayList<ObservationRecord> observationRecords = new ArrayList<ObservationRecord>();
