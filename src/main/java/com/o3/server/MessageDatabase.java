@@ -1,6 +1,7 @@
 package com.o3.server;
 
 import java.io.File;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -8,11 +9,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Base64;
+
+import org.apache.commons.codec.digest.Crypt;
 
 public class MessageDatabase {
 
     private static MessageDatabase dbInstance = null;
     private Connection dbConnection = null;
+    private SecureRandom secure;
 
     public static MessageDatabase getInstance(){
         if (dbInstance == null){
@@ -129,7 +134,10 @@ public class MessageDatabase {
         String statementString = "SELECT user, password FROM users WHERE user='" + username + "'";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
-        if (results.getString("password").equals(password)){
+
+        String dbpass = results.getString("password");
+        password = Crypt.crypt(password, dbpass);
+        if (dbpass.equals(password)){
             return true;
         }
         return false;
@@ -192,16 +200,29 @@ public class MessageDatabase {
     }
 
     public void addUser(String username, String password, String email, String nick) throws SQLException{
-        String insertString = "INSERT INTO users VALUES('" +
-        username + "', '" +
-        password + "', '" +
-        email + "', '" +
-        nick + "')";
+        password = saltPassword(password);
+        String insertString = "INSERT INTO users (user, password, email, nick)" +
+        "VALUES (?, ?, ?, ?)";
+        try{
+            PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
+            insertStatement.setString(1, username);
+            insertStatement.setString(2, password);
+            insertStatement.setString(3, email);
+            insertStatement.setString(4, nick);
+            insertStatement.executeUpdate();
+            insertStatement.close();
+        } 
+        catch (Exception e){
+            System.out.println("failed to save add user to database");
+        }    }
+
+    private String saltPassword(String password){
+        byte bytes[] = new byte[13];
+        secure.nextBytes(bytes);
+        String saltBytes = new String(Base64.getEncoder().encode(bytes));
+        String salt = "$6$" + saltBytes;
         
-        Statement insertStatement = dbConnection.createStatement();
-        insertStatement.executeUpdate(insertString);
-        insertStatement.close();
+        String hashedPassword = Crypt.crypt(password, salt);
+        return hashedPassword;
     }
-
-
 }

@@ -455,3 +455,5 @@ Temporary Items
 
 # Built Visual Studio Code Extensions
 *.vsix
+keystore.jks
+.vscode/launch.json
