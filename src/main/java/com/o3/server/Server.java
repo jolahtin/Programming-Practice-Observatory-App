@@ -97,7 +97,16 @@ public class Server implements HttpHandler {
 			if(record.isNull("recordIdentifier") || record.isNull("recordDescription") || record.isNull("recordPayload") || record.isNull("recordRightAscension") || record.isNull("recordDeclination")){
 				return false;
 			} else {
+				if(record.has("Observatory")){
+					if (record.has("longitude") && record.has("latitude") && record.has("observatoryName")){
+						return true;
+					}
+					else {
+						return false;
+					}
+				} else{
 				return true;
+				}
 			}
         }
         return false;
