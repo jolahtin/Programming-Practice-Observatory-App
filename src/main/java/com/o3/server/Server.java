@@ -73,7 +73,7 @@ public class Server implements HttpHandler {
 		return ssl;
 	}
 
-	private void storeRecord(JSONObject input){
+	private void storeRecord(JSONObject input) throws Exception{
 		ObservationRecord record = new ObservationRecord();
 		record.setRecordIdentifier(input.getString("recordIdentifier"));
 		record.setRecordDescription(input.getString("recordDescription"));
@@ -92,7 +92,7 @@ public class Server implements HttpHandler {
 		}
 	}
 
-	private boolean recordCheck(JSONObject record){
+	private boolean recordCheck(JSONObject record) throws Exception{
 		String[] fields = {"recordIdentifier", "recordDescription", "recordPayload", "recordRightAscension", "recordDeclination"};
 		for(int i=0; i<fields.length; i++){
 			if(checkJSON(record, fields[i]) == false){
@@ -110,7 +110,7 @@ public class Server implements HttpHandler {
 		return true;
     }
 
-	private boolean checkJSON (JSONObject record, String field){
+	private boolean checkJSON (JSONObject record, String field) throws Exception{
 		if(record.has(field)){
 			if (record.isNull(field)) {
 				return false;
@@ -153,7 +153,7 @@ public class Server implements HttpHandler {
 		}
 	}
 
-	private Observatory buildObservatory(JSONObject input){
+	private Observatory buildObservatory(JSONObject input) throws JSONException{
 		Observatory observatory = new Observatory();
 		JSONObject observatoryJSON = new JSONObject(input.getString("Observatory"));
 		observatory.setObservatoryName(observatoryJSON.getString("observatoryName"));
