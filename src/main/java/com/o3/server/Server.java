@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -99,10 +100,11 @@ public class Server implements HttpHandler {
 				return false;
 			}
 		}
-		if(record.has("Observatory")){
+		if(record.has("observatory")){
+			JSONArray observatoryArray = new JSONArray(record.getJSONArray("observatory"));
 			String [] observatoryFields = {"observatoryName", "latitude", "longitude"};
 			for (int i=0; i<observatoryFields.length; i++){
-				if(checkJSON(record, observatoryFields[i]) == false){
+				if(checkJSON(observatoryArray.getJSONObject(0), observatoryFields[i]) == false){
 					return false;
 				}
 			}
@@ -112,7 +114,7 @@ public class Server implements HttpHandler {
 
 	private boolean checkJSON (JSONObject record, String field) throws Exception{
 		if(record.has(field)){
-			if (record.isNull(field)) {
+			if (record.isNull(field) || record.get(field).toString().trim().isEmpty()) {
 				return false;
 			} else {
 				return true;
@@ -189,7 +191,7 @@ public class Server implements HttpHandler {
 		server.createContext("/registration", new RegistrationHandler(userAuth));
 		context.setAuthenticator(userAuth);
 
-		server.setExecutor(null); 
+		server.setExecutor(Executors.newCachedThreadPool()); 
         server.start();
 
 		} catch (Exception e){
