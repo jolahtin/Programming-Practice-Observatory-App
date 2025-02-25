@@ -144,8 +144,8 @@ public class MessageDatabase {
         try{
             PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, observatory.getObservatoryName());
-            insertStatement.setFloat(2, observatory.getLongitude());
-            insertStatement.setFloat(3, observatory.getLatitude());
+            insertStatement.setDouble(2, observatory.getLongitude());
+            insertStatement.setDouble(3, observatory.getLatitude());
             insertStatement.executeUpdate();
             insertStatement.close();
         } 
@@ -160,8 +160,8 @@ public class MessageDatabase {
             String statementString = "SELECT observatoryID FROM observatory WHERE observatoryName = ? AND longitude = ? AND latitude = ?";
             queryStatement = dbConnection.prepareStatement(statementString);
             queryStatement.setString(1, observatory.getObservatoryName());
-            queryStatement.setFloat(2, observatory.getLongitude());
-            queryStatement.setFloat(3, observatory.getLatitude());
+            queryStatement.setDouble(2, observatory.getLongitude());
+            queryStatement.setDouble(3, observatory.getLatitude());
     
             ResultSet results = queryStatement.executeQuery();
             if (results.next()) {
