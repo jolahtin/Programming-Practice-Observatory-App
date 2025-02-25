@@ -131,9 +131,13 @@ public class Server implements HttpHandler {
 			observationRecords = MessageDatabase.getInstance().getMessages();
 			for(int i=0;i<observationRecords.size();i++){
 				JSONObject recordObject = new JSONObject(observationRecords.get(i));
+				if (observationRecords.get(i).getObservatory() != null){
+					recordObject.put("observatory", buildJSONObservatory(observationRecords.get(i)));
+				}
 				jsonRecords.put(recordObject);
 			}
 			String output = jsonRecords.toString();
+			System.out.println(output);
 			respond(t, output, 201);
 		} catch (SQLException e) {
 			respond(t, "couldn't get records", 500);
@@ -161,6 +165,14 @@ public class Server implements HttpHandler {
 		observatory.setObservatoryName(input.getString("observatoryName"));
 		observatory.setLatitude(input.getFloat("latitude"));
 		observatory.setLongitude(input.getFloat("longitude"));
+		return observatory;
+	}
+	
+	private JSONArray buildJSONObservatory(ObservationRecord record){
+		Observatory recordObservatory = record.getObservatory();
+		JSONArray observatory = new JSONArray();
+		JSONObject observatoryRecords = new JSONObject(recordObservatory);
+		observatory.put(observatoryRecords);
 		return observatory;
 	}
 
