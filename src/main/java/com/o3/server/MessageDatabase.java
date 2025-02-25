@@ -154,18 +154,21 @@ public class MessageDatabase {
         }
     }
 
-    private String checkObservatory(Observatory observatory){
-        Statement queryStatement = null;
-        try{
-        String statementString = "SELECT observatoryID FROM observatory WHERE observatoryName = '" + observatory.getObservatoryName() +"', " +
-                                "longitude = " + observatory.getLongitude() +", " +
-                                "latitude = " + observatory.getLatitude() +"";
-        queryStatement = dbConnection.createStatement();
-        ResultSet results = queryStatement.executeQuery(statementString);
-        queryStatement.close();
-        return results.getString(0);
-        } catch(Exception e){
-        System.out.println("No observatory found");
+    private String checkObservatory(Observatory observatory) {
+        PreparedStatement queryStatement = null;
+        try {
+            String statementString = "SELECT observatoryID FROM observatory WHERE observatoryName = ? AND longitude = ? AND latitude = ?";
+            queryStatement = dbConnection.prepareStatement(statementString);
+            queryStatement.setString(1, observatory.getObservatoryName());
+            queryStatement.setFloat(2, observatory.getLongitude());
+            queryStatement.setFloat(3, observatory.getLatitude());
+    
+            ResultSet results = queryStatement.executeQuery();
+            if (results.next()) {
+                return results.getString(1);
+            }
+        } catch (SQLException e) {
+            System.out.println("No observatory found: " + e.getMessage());
         }
         return null;
     }
@@ -178,8 +181,8 @@ public class MessageDatabase {
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
         newObservatory.setObservatoryName(results.getString("observatoryName"));
-        newObservatory.setLongitude(results.getInt("longitude"));
-        newObservatory.setLatitude(results.getInt("latitude"));
+        newObservatory.setLongitude(results.getFloat("longitude"));
+        newObservatory.setLatitude(results.getFloat("latitude"));
         queryStatement.close();
         return newObservatory;
     }
