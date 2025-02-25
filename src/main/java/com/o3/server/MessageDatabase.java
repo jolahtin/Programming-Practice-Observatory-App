@@ -43,7 +43,7 @@ public class MessageDatabase {
         if (dbConnection != null){
             String createUserDB = "create table users (user varchar(25) PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
             String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, observatory INTEGER(64), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID))";
-            String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude varchar(20) NOT NULL, longitude varchar(20) NOT NULL)";
+            String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude num(20) NOT NULL, longitude num(20) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
             createStatement.executeUpdate(createMessageDB);
@@ -144,8 +144,8 @@ public class MessageDatabase {
         try{
             PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, observatory.getObservatoryName());
-            insertStatement.setString(2, observatory.getLongitude());
-            insertStatement.setString(3, observatory.getLatitude());
+            insertStatement.setFloat(2, observatory.getLongitude());
+            insertStatement.setFloat(3, observatory.getLatitude());
             insertStatement.executeUpdate();
             insertStatement.close();
         } 
@@ -158,8 +158,8 @@ public class MessageDatabase {
         Statement queryStatement = null;
         try{
         String statementString = "SELECT observatoryID FROM observatory WHERE observatoryName = '" + observatory.getObservatoryName() +"', " +
-                                "longitude = '" + observatory.getLongitude() +"', " +
-                                "latitude = '" + observatory.getLatitude() +"'";
+                                "longitude = " + observatory.getLongitude() +", " +
+                                "latitude = " + observatory.getLatitude() +"";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
         queryStatement.close();
@@ -178,8 +178,8 @@ public class MessageDatabase {
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
         newObservatory.setObservatoryName(results.getString("observatoryName"));
-        newObservatory.setLongitude(results.getString("longitude"));
-        newObservatory.setLatitude(results.getString("latitude"));
+        newObservatory.setLongitude(results.getInt("longitude"));
+        newObservatory.setLatitude(results.getInt("latitude"));
         queryStatement.close();
         return newObservatory;
     }

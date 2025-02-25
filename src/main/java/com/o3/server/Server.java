@@ -83,7 +83,8 @@ public class Server implements HttpHandler {
 		record.setRecordDeclination(input.getString("recordDeclination"));
 		record.setRecordOwner(input.getString("recordOwner"));
 		if (input.has("observatory")){
-			record.setObservatory(buildObservatory(input));
+			JSONArray observatoryArray = new JSONArray(input.getJSONArray("observatory"));
+			record.setObservatory(buildObservatory(observatoryArray.getJSONObject(0)));
 		}
 		record.setRecordTimeReceived();
 		try {
@@ -157,10 +158,9 @@ public class Server implements HttpHandler {
 
 	private Observatory buildObservatory(JSONObject input) throws JSONException{
 		Observatory observatory = new Observatory();
-		JSONObject observatoryJSON = new JSONObject(input.getString("Observatory"));
-		observatory.setObservatoryName(observatoryJSON.getString("observatoryName"));
-		observatory.setLatitude(observatoryJSON.getString("latitude"));
-		observatory.setLongitude(observatoryJSON.getString("longitude"));
+		observatory.setObservatoryName(input.getString("observatoryName"));
+		observatory.setLatitude(input.getFloat("latitude"));
+		observatory.setLongitude(input.getFloat("longitude"));
 		return observatory;
 	}
 

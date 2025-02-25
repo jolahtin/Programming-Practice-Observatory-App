@@ -2,8 +2,8 @@ package com.o3.server;
 
 public class Observatory {
     private String observatoryName;
-    private String latitude;
-    private String longitude;
+    private float latitude;
+    private float longitude;
 
     public String getObservatoryName() {
         return observatoryName;
@@ -12,17 +12,17 @@ public class Observatory {
         this.observatoryName = observatoryName;
     }
 
-    public String getLatitude() {
+    public float getLatitude() {
         return latitude;
     }
-    public void setLatitude(String latitude) {
+    public void setLatitude(float latitude) {
         this.latitude = latitude;
     }
 
-    public String getLongitude() {
+    public float getLongitude() {
         return longitude;
     }
-    public void setLongitude(String longitude) {
+    public void setLongitude(float longitude) {
         this.longitude = longitude;
     }
 
