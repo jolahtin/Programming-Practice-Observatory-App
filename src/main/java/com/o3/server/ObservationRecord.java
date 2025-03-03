@@ -15,7 +15,7 @@ public class ObservationRecord {
     private String recordTimeReceived;
     private String recordOwner;
     private Observatory observatory = null;
-    private String updatereason = "N/A";
+    private String updateReason = null;
     private String modified = null;
 
     public void setId(int id) {
@@ -86,17 +86,17 @@ public class ObservationRecord {
         this.observatory = observatory;
     }
 
-    public void setUpdatereason(String updatereason) {
-        this.updatereason = updatereason;
+    public void setUpdateReason(String updatereason) {
+        this.updateReason = updatereason;
     }
-    public String getUpdatereason() {
-        return updatereason;
+    public String getUpdateReason() {
+        return updateReason;
     }
 
     public void setModified() {
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-        this.recordTimeReceived = now.format(formatter); 
+        this.modified = now.format(formatter); 
     }
     public void fetchModified(String modified){
         this.modified = modified;

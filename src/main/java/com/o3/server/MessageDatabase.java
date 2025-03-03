@@ -42,7 +42,7 @@ public class MessageDatabase {
     private boolean newdb() throws SQLException{
         if (dbConnection != null){
             String createUserDB = "create table users (user varchar(25) PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
-            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, ownerName varchar(25) NOT NULL, observatory INTEGER(64), updatereason varchar(100), modified varchar(25), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID), FOREIGN KEY(ownerName) REFERENCES users(user))";
+            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, ownerName varchar(25) NOT NULL, observatory INTEGER(64), updateReason varchar(100), modified varchar(25), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID), FOREIGN KEY(ownerName) REFERENCES users(user))";
             String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude num(20) NOT NULL, longitude num(20) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
@@ -80,7 +80,7 @@ public class MessageDatabase {
         ObservationRecord record = new ObservationRecord();
         Statement queryStatement = null;
 
-        String statementString = "SELECT rowid, recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory, updatereason, modified FROM messages";
+        String statementString = "SELECT rowid, recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory, updateReason, modified FROM messages";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
 
@@ -96,10 +96,8 @@ public class MessageDatabase {
             if (results.getString("observatory") != null){
                 record.setObservatory(getObservatory(results.getString("observatory")));
             }
-            if (results.getString("modified") != null){
-                record.fetchModified(results.getString("modified"));
-                record.setUpdatereason(results.getString("updatereason"));
-            }
+            record.fetchModified(results.getString("modified"));
+            record.setUpdateReason(results.getString("updateReason"));
             records.add(record);
         }
         queryStatement.close();
@@ -108,7 +106,7 @@ public class MessageDatabase {
 
     public void insertMessage(ObservationRecord record, String owner) throws SQLException {
         String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, ownerName, observatory) " +
-                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,)";
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try {
             PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, record.getRecordIdentifier());
@@ -241,9 +239,8 @@ public class MessageDatabase {
     }
 
     public void updateMessage(ObservationRecord record) throws SQLException{
-        String updateString = "UPDATE messages SET recordIdentifier = ?, recordDescription = ?, recordPayload = ?, recordRightAscension = ?, recordDeclination = ?, recordOwner = ?, observatory = ?, updatereason = ?, modified = ? WHERE rowid = " + record.getId();
+        String updateString = "UPDATE messages SET recordIdentifier = ?, recordDescription = ?, recordPayload = ?, recordRightAscension = ?, recordDeclination = ?, recordOwner = ?, observatory = ?, updateReason = ?, modified = ? WHERE rowid = " + record.getId();
         PreparedStatement updateStatement = dbConnection.prepareStatement(updateString);
-        updateStatement.setString(0, record.getRecordIdentifier());
         updateStatement.setString(1, record.getRecordIdentifier());
         updateStatement.setString(2, record.getRecordDescription());
         updateStatement.setString(3, record.getRecordPayload());
@@ -258,7 +255,7 @@ public class MessageDatabase {
             }
             updateStatement.setString(7, observatoryId);
         } else {updateStatement.setString(7, null);};
-        updateStatement.setString(8, record.getUpdatereason());
+        updateStatement.setString(8, record.getUpdateReason());
         updateStatement.setString(9, record.getModified());
         updateStatement.executeUpdate();
         updateStatement.close();

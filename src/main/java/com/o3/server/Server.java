@@ -60,20 +60,23 @@ public class Server implements HttpHandler {
                 respond(t, "Incorrect Content Type", 411);
 			}else{
 				try{
-				if (!MessageDatabase.getInstance().getRecordOwnerName(extractId(query)).equals(t.getPrincipal().getUsername())){
+					String owner = MessageDatabase.getInstance().getRecordOwnerName(extractId(query));
+				if (!owner.equals(t.getPrincipal().getUsername())){
 					respond(t, "User does not have permission to modify message", 400);
 				}else{
 					try{
 						JSONObject input = new JSONObject(text.toString());
 						if (recordCheck(input)){
+							if (updateCheck(input)){
 							checkUsername(t, input);
 							updateRecord(extractId(query), input);
 							respond(t, "OK", 200);
+							}
 						} else {
 							respond(t, "missing fields", 412);
 						}
 						} catch (Exception e){
-							respond(t, "Not proper JSON", 413);
+							respond(t, "Not proper JSON", 414);
 						}
 					}
 				} catch (Exception e){
@@ -213,8 +216,11 @@ public class Server implements HttpHandler {
 		output.close();
     }
 
-	private int extractId(String query){
+	private int extractId(String query) throws Exception{
 		String[] pair = query.split("=");
+		if(!pair[0].equals("id")){
+			throw new Exception();
+		}
 		int id = Integer.parseInt(pair[1]);
 		return id;
 	}
@@ -232,13 +238,20 @@ public class Server implements HttpHandler {
 			JSONArray observatoryArray = new JSONArray(input.getJSONArray("observatory"));
 			record.setObservatory(buildObservatory(observatoryArray.getJSONObject(0)));
 		}
-		if (input.has("updatereason")){
-			record.setUpdatereason(input.getString("updatereason"));
+		if (!input.isNull("updateReason")){
+			record.setUpdateReason(input.getString("updateReason"));
 		} else{
-			record.setUpdatereason("N/A");
+			record.setUpdateReason("N/A");
 		}
 		record.setModified();
-			MessageDatabase.getInstance().updateMessage(record);
+		MessageDatabase.getInstance().updateMessage(record);
+	}
+
+	private boolean updateCheck(JSONObject input){
+		if(input.has("updateReason")){
+			return true;
+		}
+		return false;
 	}
 
     public static void main(String[] args) throws Exception {

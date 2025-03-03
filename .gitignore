@@ -457,3 +457,8 @@ Temporary Items
 *.vsix
 keystore.jks
 .vscode/launch.json
+src/main/java/com/o3/server/Server.java
+sqldiff.exe
+sqlite3_analyzer.exe
+sqlite3_rsync.exe
+sqlite3.exe
