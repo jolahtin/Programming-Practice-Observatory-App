@@ -42,7 +42,7 @@ public class MessageDatabase {
     private boolean newdb() throws SQLException{
         if (dbConnection != null){
             String createUserDB = "create table users (user varchar(25) PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
-            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, observatory INTEGER(64), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID))";
+            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, ownerName varchar(25) NOT NULL, observatory INTEGER(64), updatereason varchar(100), modified varchar(25), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID), FOREIGN KEY(ownerName) REFERENCES users(user))";
             String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude num(20) NOT NULL, longitude num(20) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
@@ -80,11 +80,12 @@ public class MessageDatabase {
         ObservationRecord record = new ObservationRecord();
         Statement queryStatement = null;
 
-        String statementString = "SELECT recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory FROM messages";
+        String statementString = "SELECT rowid, recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory, updatereason, modified FROM messages";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
 
         while (results.next()){
+            record.setId(results.getInt("rowid"));
             record.setRecordIdentifier(results.getString("recordIdentifier"));
             record.setRecordDescription(results.getString("recordDescription"));
             record.setRecordPayload(results.getString("recordPayload"));
@@ -95,15 +96,19 @@ public class MessageDatabase {
             if (results.getString("observatory") != null){
                 record.setObservatory(getObservatory(results.getString("observatory")));
             }
+            if (results.getString("modified") != null){
+                record.fetchModified(results.getString("modified"));
+                record.setUpdatereason(results.getString("updatereason"));
+            }
             records.add(record);
         }
         queryStatement.close();
         return records;
     }
 
-    public void insertMessage(ObservationRecord record) throws SQLException {
-        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory) " +
-                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public void insertMessage(ObservationRecord record, String owner) throws SQLException {
+        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, ownerName, observatory) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,)";
         try {
             PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, record.getRecordIdentifier());
@@ -113,14 +118,15 @@ public class MessageDatabase {
             insertStatement.setString(5, record.getRecordDeclination());
             insertStatement.setString(6, record.getRecordTimeReceived());
             insertStatement.setString(7, record.getRecordOwner());
+            insertStatement.setString(8, owner);
             if (record.getObservatory() != null){
                 String observatoryId = checkObservatory(record.getObservatory());
                 if(observatoryId == null){
                     addObservatory(record.getObservatory());
                     observatoryId = checkObservatory(record.getObservatory());
                 }
-                insertStatement.setString(8, observatoryId);
-            } else {insertStatement.setString(8, null);};
+                insertStatement.setString(9, observatoryId);
+            } else {insertStatement.setString(9, null);};
             insertStatement.executeUpdate();
             insertStatement.close();
         } catch(Exception e){
@@ -224,5 +230,37 @@ public class MessageDatabase {
         
         String hashedPassword = Crypt.crypt(password, salt);
         return hashedPassword;
+    }
+
+    public String getRecordOwnerName(int id) throws SQLException{
+        String statementString = "SELECT ownerName FROM messages WHERE rowid = " + id;
+        Statement queryStatement = dbConnection.createStatement();
+        ResultSet results = queryStatement.executeQuery(statementString);
+        String name = results.getString(1);
+        return name;
+    }
+
+    public void updateMessage(ObservationRecord record) throws SQLException{
+        String updateString = "UPDATE messages SET recordIdentifier = ?, recordDescription = ?, recordPayload = ?, recordRightAscension = ?, recordDeclination = ?, recordOwner = ?, observatory = ?, updatereason = ?, modified = ? WHERE rowid = " + record.getId();
+        PreparedStatement updateStatement = dbConnection.prepareStatement(updateString);
+        updateStatement.setString(0, record.getRecordIdentifier());
+        updateStatement.setString(1, record.getRecordIdentifier());
+        updateStatement.setString(2, record.getRecordDescription());
+        updateStatement.setString(3, record.getRecordPayload());
+        updateStatement.setString(4, record.getRecordRightAscension());
+        updateStatement.setString(5, record.getRecordDeclination());
+        updateStatement.setString(6, record.getRecordOwner());
+        if (record.getObservatory() != null){
+            String observatoryId = checkObservatory(record.getObservatory());
+            if(observatoryId == null){
+                addObservatory(record.getObservatory());
+                observatoryId = checkObservatory(record.getObservatory());
+            }
+            updateStatement.setString(7, observatoryId);
+        } else {updateStatement.setString(7, null);};
+        updateStatement.setString(8, record.getUpdatereason());
+        updateStatement.setString(9, record.getModified());
+        updateStatement.executeUpdate();
+        updateStatement.close();
     }
 }

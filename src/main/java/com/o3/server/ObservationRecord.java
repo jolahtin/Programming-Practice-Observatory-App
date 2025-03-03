@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 
 public class ObservationRecord {
 
+    private int id;
     private String recordIdentifier;
     private String recordDescription;
     private String recordPayload;
@@ -14,6 +15,15 @@ public class ObservationRecord {
     private String recordTimeReceived;
     private String recordOwner;
     private Observatory observatory = null;
+    private String updatereason = "N/A";
+    private String modified = null;
+
+    public void setId(int id) {
+        this.id = id;
+    }
+    public int getId() {
+        return id;
+    }
 
     public String getRecordIdentifier() {
         return recordIdentifier;
@@ -74,6 +84,25 @@ public class ObservationRecord {
     }
     public void setObservatory(Observatory observatory) {
         this.observatory = observatory;
+    }
+
+    public void setUpdatereason(String updatereason) {
+        this.updatereason = updatereason;
+    }
+    public String getUpdatereason() {
+        return updatereason;
+    }
+
+    public void setModified() {
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+        this.recordTimeReceived = now.format(formatter); 
+    }
+    public void fetchModified(String modified){
+        this.modified = modified;
+    }
+    public String getModified() {
+        return modified;
     }
 
 }

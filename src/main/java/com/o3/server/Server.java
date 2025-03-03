@@ -41,7 +41,7 @@ public class Server implements HttpHandler {
 				JSONObject input = new JSONObject(text.toString());
 				if (recordCheck(input)){
 					checkUsername(t, input);
-					storeRecord(input);
+					storeRecord(t, input);
 					respond(t, "OK", 200);
 				} else {
 					respond(t, "missing fields", 412);
@@ -53,6 +53,34 @@ public class Server implements HttpHandler {
 
 		} else if (t.getRequestMethod().equalsIgnoreCase("GET")) {
 			sendJSONRecords(t);
+		} else if (t.getRequestMethod().equalsIgnoreCase("PUT")){
+        	String text = new BufferedReader(new InputStreamReader(t.getRequestBody(),StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
+			String query = t.getRequestURI().getQuery();
+            if(!t.getRequestHeaders().get("Content-Type").get(0).equalsIgnoreCase("application/json")){
+                respond(t, "Incorrect Content Type", 411);
+			}else{
+				try{
+				if (!MessageDatabase.getInstance().getRecordOwnerName(extractId(query)).equals(t.getPrincipal().getUsername())){
+					respond(t, "User does not have permission to modify message", 400);
+				}else{
+					try{
+						JSONObject input = new JSONObject(text.toString());
+						if (recordCheck(input)){
+							checkUsername(t, input);
+							updateRecord(extractId(query), input);
+							respond(t, "OK", 200);
+						} else {
+							respond(t, "missing fields", 412);
+						}
+						} catch (Exception e){
+							respond(t, "Not proper JSON", 413);
+						}
+					}
+				} catch (Exception e){
+					respond(t, "Failed to find message", 400);
+				} 
+			}
+
 		} else {
 			respond(t, "Not Supported", 400);
 		}
@@ -74,7 +102,7 @@ public class Server implements HttpHandler {
 		return ssl;
 	}
 
-	private void storeRecord(JSONObject input) throws Exception{
+	private void storeRecord(HttpExchange t, JSONObject input) throws Exception{
 		ObservationRecord record = new ObservationRecord();
 		record.setRecordIdentifier(input.getString("recordIdentifier"));
 		record.setRecordDescription(input.getString("recordDescription"));
@@ -88,7 +116,7 @@ public class Server implements HttpHandler {
 		}
 		record.setRecordTimeReceived();
 		try {
-			MessageDatabase.getInstance().insertMessage(record);
+			MessageDatabase.getInstance().insertMessage(record, t.getPrincipal().getUsername());
 		} catch (SQLException e) {
 			System.out.println("Couldn't insert message to database!");
 		}
@@ -184,6 +212,34 @@ public class Server implements HttpHandler {
 		output.flush();
 		output.close();
     }
+
+	private int extractId(String query){
+		String[] pair = query.split("=");
+		int id = Integer.parseInt(pair[1]);
+		return id;
+	}
+
+	private void updateRecord(int id, JSONObject input) throws Exception{
+		ObservationRecord record = new ObservationRecord();
+		record.setId(id);
+		record.setRecordIdentifier(input.getString("recordIdentifier"));
+		record.setRecordDescription(input.getString("recordDescription"));
+		record.setRecordPayload(input.getString("recordPayload"));
+		record.setRecordRightAscension(input.getString("recordRightAscension"));
+		record.setRecordDeclination(input.getString("recordDeclination"));
+		record.setRecordOwner(input.getString("recordOwner"));
+		if (input.has("observatory")){
+			JSONArray observatoryArray = new JSONArray(input.getJSONArray("observatory"));
+			record.setObservatory(buildObservatory(observatoryArray.getJSONObject(0)));
+		}
+		if (input.has("updatereason")){
+			record.setUpdatereason(input.getString("updatereason"));
+		} else{
+			record.setUpdatereason("N/A");
+		}
+		record.setModified();
+			MessageDatabase.getInstance().updateMessage(record);
+	}
 
     public static void main(String[] args) throws Exception {
 		try {
