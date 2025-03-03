@@ -61,19 +61,21 @@ public class Server implements HttpHandler {
 			}else{
 				try{
 					String owner = MessageDatabase.getInstance().getRecordOwnerName(extractId(query));
-				if (!owner.equals(t.getPrincipal().getUsername())){
-					respond(t, "User does not have permission to modify message", 400);
-				}else{
-					try{
-						JSONObject input = new JSONObject(text.toString());
-						if (recordCheck(input)){
-							if (updateCheck(input)){
-							checkUsername(t, input);
-							updateRecord(extractId(query), input);
-							respond(t, "OK", 200);
-							}
-						} else {
-							respond(t, "missing fields", 412);
+					if (!owner.equals(t.getPrincipal().getUsername())){
+						respond(t, "User does not have permission to modify message", 400);
+					}else{
+						try{
+							JSONObject input = new JSONObject(text.toString());
+							if (recordCheck(input)){
+								if (updateCheck(input)){
+									checkUsername(t, input);
+									updateRecord(extractId(query), input);
+									respond(t, "OK", 200);
+								} else{
+									respond(t, "malformed fields", 400);
+								}
+							} else {
+								respond(t, "missing fields", 412);
 						}
 						} catch (Exception e){
 							respond(t, "Not proper JSON", 414);
@@ -218,7 +220,7 @@ public class Server implements HttpHandler {
 
 	private int extractId(String query) throws Exception{
 		String[] pair = query.split("=");
-		if(!pair[0].equals("id")){
+		if(!pair[0].equals("id") || pair.length > 2){
 			throw new Exception();
 		}
 		int id = Integer.parseInt(pair[1]);
@@ -251,7 +253,7 @@ public class Server implements HttpHandler {
 		if(input.has("updateReason")){
 			return true;
 		}
-		return false;
+		return true;
 	}
 
     public static void main(String[] args) throws Exception {
