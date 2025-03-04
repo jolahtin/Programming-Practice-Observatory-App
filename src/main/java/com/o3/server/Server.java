@@ -225,7 +225,7 @@ public class Server implements HttpHandler {
 		JSONObject weatherRecords = new JSONObject();
 		weatherRecords.put("backgroundLightVolume", weather.getBagroundLightVolume());
 		weatherRecords.put("temperatureInKelvins", weather.getTemperatureInKelvins());
-		weatherRecords.put("cloudinessPercentange", weather.getCloudinessPercentance());
+		weatherRecords.put("cloudinessPercentage", weather.getCloudinessPercentance());
 		observatoryWeather.put(weatherRecords);
 		System.out.println(observatoryWeather.toString());
 		return observatoryWeather;
