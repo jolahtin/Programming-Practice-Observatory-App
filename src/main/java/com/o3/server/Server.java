@@ -174,7 +174,6 @@ public class Server implements HttpHandler {
 					recordObject.put("observatory", buildJSONObservatory(observationRecords.get(i)));
 				}
 				if (observationRecords.get(i).getObservatoryWeather() != null){
-					JSONObject weather = new JSONObject(observationRecords.get(i).getObservatoryWeather());
 					recordObject.put("observatoryWeather", buildWeather(observationRecords.get(i)));
 				}
 				jsonRecords.put(recordObject);
@@ -206,8 +205,8 @@ public class Server implements HttpHandler {
 	private Observatory buildObservatory(JSONObject input) throws JSONException{
 		Observatory observatory = new Observatory();
 		observatory.setObservatoryName(input.getString("observatoryName"));
-		observatory.setLatitude(input.getFloat("latitude"));
-		observatory.setLongitude(input.getFloat("longitude"));
+		observatory.setLatitude(input.getDouble("latitude"));
+		observatory.setLongitude(input.getDouble("longitude"));
 		return observatory;
 	}
 	
