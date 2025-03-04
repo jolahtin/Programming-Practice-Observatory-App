@@ -174,6 +174,7 @@ public class Server implements HttpHandler {
 					recordObject.put("observatory", buildJSONObservatory(observationRecords.get(i)));
 				}
 				if (observationRecords.get(i).getObservatoryWeather() != null){
+					JSONObject weather = new JSONObject(observationRecords.get(i).getObservatoryWeather());
 					recordObject.put("observatoryWeather", buildWeather(observationRecords.get(i)));
 				}
 				jsonRecords.put(recordObject);
@@ -221,7 +222,10 @@ public class Server implements HttpHandler {
 	private JSONArray buildWeather(ObservationRecord record){
 		ObservatoryWeather weather = record.getObservatoryWeather();
 		JSONArray observatoryWeather = new JSONArray();
-		JSONObject weatherRecords = new JSONObject(weather);
+		JSONObject weatherRecords = new JSONObject();
+		weatherRecords.put("backgroundLightVolume", weather.getBagroundLightVolume());
+		weatherRecords.put("temperatureInKelvins", weather.getTemperatureInKelvins());
+		weatherRecords.put("cloudinessPercentange", weather.getCloudinessPercentance());
 		observatoryWeather.put(weatherRecords);
 		System.out.println(observatoryWeather.toString());
 		return observatoryWeather;

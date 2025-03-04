@@ -13,14 +13,14 @@ import org.w3c.dom.NodeList;
 
 public class ObservatoryWeather {
     private String temperatureInKelvins;
-    private String cloudinessPercentance;
-    private String bagroundLightVolume;
+    private String cloudinessPercentange;
+    private String backgroundLightVolume;
 
     public String getBagroundLightVolume() {
-        return bagroundLightVolume;
+        return backgroundLightVolume;
     }
     public void setBagroundLightVolume(String bagroundLightVolume) {
-        this.bagroundLightVolume = bagroundLightVolume;
+        this.backgroundLightVolume = bagroundLightVolume;
     }
 
     public String getTemperatureInKelvins() {
@@ -31,10 +31,10 @@ public class ObservatoryWeather {
     }
 
     public void setCloudinessPercentance(String cloudinessPercentance) {
-        this.cloudinessPercentance = cloudinessPercentance;
+        this.cloudinessPercentange = cloudinessPercentance;
     }
     public String getCloudinessPercentance() {
-        return cloudinessPercentance;
+        return cloudinessPercentange;
     }
 
     public void getWeather(double lat, double lon){
@@ -59,9 +59,9 @@ public class ObservatoryWeather {
                 if (parameterName.equals("temperatureInKelvins")){
                     this.temperatureInKelvins = parameterValue;
                 } else if(parameterName.equals("cloudinessPercentance")){
-                    this.cloudinessPercentance = parameterValue;
+                    this.cloudinessPercentange = parameterValue;
                 } else if(parameterName.equals("bagroundLightVolume")){
-                    this.bagroundLightVolume = parameterValue;
+                    this.backgroundLightVolume = parameterValue;
                 }
             }
         }
