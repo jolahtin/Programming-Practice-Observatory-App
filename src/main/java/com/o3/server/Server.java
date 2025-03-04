@@ -40,6 +40,7 @@ public class Server implements HttpHandler {
 				try{
 				JSONObject input = new JSONObject(text.toString());
 				if (recordCheck(input)){
+					System.out.println(input);
 					checkUsername(t, input);
 					storeRecord(t, input);
 					respond(t, "OK", 200);
@@ -115,11 +116,16 @@ public class Server implements HttpHandler {
 		record.setRecordRightAscension(input.getString("recordRightAscension"));
 		record.setRecordDeclination(input.getString("recordDeclination"));
 		record.setRecordOwner(input.getString("recordOwner"));
+		record.setRecordTimeReceived();
 		if (input.has("observatory")){
 			JSONArray observatoryArray = new JSONArray(input.getJSONArray("observatory"));
 			record.setObservatory(buildObservatory(observatoryArray.getJSONObject(0)));
+			if (input.has("observatoryWeather")){
+				ObservatoryWeather weather = new ObservatoryWeather();
+				weather.getWeather(record.getObservatory().getLatitude(), record.getObservatory().getLongitude());
+				record.setObservatoryWeather(weather);
+			}
 		}
-		record.setRecordTimeReceived();
 		try {
 			MessageDatabase.getInstance().insertMessage(record, t.getPrincipal().getUsername());
 		} catch (SQLException e) {
@@ -167,6 +173,9 @@ public class Server implements HttpHandler {
 				if (observationRecords.get(i).getObservatory() != null){
 					recordObject.put("observatory", buildJSONObservatory(observationRecords.get(i)));
 				}
+				if (observationRecords.get(i).getObservatoryWeather() != null){
+					recordObject.put("observatoryWeather", buildWeather(observationRecords.get(i)));
+				}
 				jsonRecords.put(recordObject);
 			}
 			String output = jsonRecords.toString();
@@ -207,6 +216,15 @@ public class Server implements HttpHandler {
 		JSONObject observatoryRecords = new JSONObject(recordObservatory);
 		observatory.put(observatoryRecords);
 		return observatory;
+	}
+
+	private JSONArray buildWeather(ObservationRecord record){
+		ObservatoryWeather weather = record.getObservatoryWeather();
+		JSONArray observatoryWeather = new JSONArray();
+		JSONObject weatherRecords = new JSONObject(weather);
+		observatoryWeather.put(weatherRecords);
+		System.out.println(observatoryWeather.toString());
+		return observatoryWeather;
 	}
 
     private void respond(HttpExchange t, String response, int code) throws IOException{

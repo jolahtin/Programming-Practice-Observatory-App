@@ -42,12 +42,14 @@ public class MessageDatabase {
     private boolean newdb() throws SQLException{
         if (dbConnection != null){
             String createUserDB = "create table users (user varchar(25) PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
-            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, ownerName varchar(25) NOT NULL, observatory INTEGER(64), updateReason varchar(100), modified varchar(25), FOREIGN KEY(observatory) REFERENCES observatory(observatoryID), FOREIGN KEY(ownerName) REFERENCES users(user))";
+            String createWeatherDB = "create table weather (weatherId INTEGER PRIMARY KEY, temperature TEXT, light TEXT, cloudiness TEXT)";
+            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, ownerName varchar(25) NOT NULL, observatory INTEGER(64), updateReason varchar(100), modified varchar(25), weather INTEGER, FOREIGN KEY(observatory) REFERENCES observatory(observatoryID), FOREIGN KEY(ownerName) REFERENCES users(user), FOREIGN KEY(weather) REFERENCES weather(weatherId))";
             String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude num(20) NOT NULL, longitude num(20) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
-            createStatement.executeUpdate(createMessageDB);
             createStatement.executeUpdate(createObservatoryDB);
+            createStatement.executeUpdate(createWeatherDB);
+            createStatement.executeUpdate(createMessageDB);
             createStatement.close();
             return true;
         }
@@ -80,7 +82,7 @@ public class MessageDatabase {
         ObservationRecord record = new ObservationRecord();
         Statement queryStatement = null;
 
-        String statementString = "SELECT rowid, recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory, updateReason, modified FROM messages";
+        String statementString = "SELECT rowid, recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory, updateReason, modified, weather FROM messages";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
 
@@ -96,6 +98,9 @@ public class MessageDatabase {
             if (results.getString("observatory") != null){
                 record.setObservatory(getObservatory(results.getString("observatory")));
             }
+            if (results.getString("weather") != null){
+                record.setObservatoryWeather(fetchWeather(results.getString("weather")));
+            }
             record.fetchModified(results.getString("modified"));
             record.setUpdateReason(results.getString("updateReason"));
             records.add(record);
@@ -105,8 +110,8 @@ public class MessageDatabase {
     }
 
     public void insertMessage(ObservationRecord record, String owner) throws SQLException {
-        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, ownerName, observatory) " +
-                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, ownerName, observatory, weather) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try {
             PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, record.getRecordIdentifier());
@@ -125,6 +130,13 @@ public class MessageDatabase {
                 }
                 insertStatement.setString(9, observatoryId);
             } else {insertStatement.setString(9, null);};
+            if(record.getObservatoryWeather() != null){
+                String weatherId = checkWeather(record.getObservatoryWeather());
+                if(weatherId == null){
+                    weatherId = addWeather(record.getObservatoryWeather());
+                }
+                insertStatement.setString(10, weatherId);
+            } else {insertStatement.setString(10, null);}
             insertStatement.executeUpdate();
             insertStatement.close();
         } catch(Exception e){
@@ -191,6 +203,61 @@ public class MessageDatabase {
         return newObservatory;
     }
 
+    private String checkWeather(ObservatoryWeather weather){
+        PreparedStatement queryStatement = null;
+        try{
+            String statementString = "SELECT weatherId FROM weather WHERE temperature = ? AND light = ? AND cloudiness = ?";
+            queryStatement = dbConnection.prepareStatement(statementString);
+            queryStatement.setString(1, weather.getTemperatureInKelvins());
+            queryStatement.setString(2, weather.getBagroundLightVolume());
+            queryStatement.setString(3, weather.getCloudinessPercentance());
+
+            ResultSet results = queryStatement.executeQuery();
+            if (results.next()){
+                return results.getString(1);
+            }
+        } catch (SQLException e){
+            System.out.println("No weather found!");
+        }
+        return null;
+    }
+
+    private String addWeather(ObservatoryWeather weather){
+        String insertString = "INSERT INTO weather (temperature, light, cloudiness)" +
+        "VALUES (?, ?, ?)";
+        String weatherId = null;
+        try{
+            PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
+            insertStatement.setString(1, weather.getTemperatureInKelvins());
+            insertStatement.setString(2, weather.getBagroundLightVolume());
+            insertStatement.setString(3, weather.getCloudinessPercentance());
+            insertStatement.executeUpdate();
+            Statement statement = dbConnection.createStatement();
+            ResultSet keys = statement.executeQuery("SELECT last_insert_rowid()");
+            weatherId = keys.getString(1);
+            statement.close();
+            insertStatement.close();
+        } 
+        catch (Exception e){
+            System.out.println("failed to save weather to database");
+        }
+        return weatherId;
+    }
+
+    private ObservatoryWeather fetchWeather(String id)throws SQLException{
+        Statement queryStatement = null;
+        ObservatoryWeather newWeather = new ObservatoryWeather();
+    
+        String statementString = "SELECT temperature, light, cloudiness FROM weather WHERE weatherId = '" + id +"'";
+        queryStatement = dbConnection.createStatement();
+        ResultSet results = queryStatement.executeQuery(statementString);
+        newWeather.setTemperatureInKelvins(results.getString("temperature"));
+        newWeather.setBagroundLightVolume(results.getString("light"));
+        newWeather.setCloudinessPercentance(results.getString("cloudiness"));
+        queryStatement.close();
+        return newWeather;
+    }
+    
     public void addUser(String username, String password, String email, String nick) throws SQLException{
         password = saltPassword(password);
         String insertString = "INSERT INTO users (user, password, email, nick)" +

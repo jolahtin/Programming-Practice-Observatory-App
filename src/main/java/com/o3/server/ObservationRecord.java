@@ -17,6 +17,7 @@ public class ObservationRecord {
     private Observatory observatory = null;
     private String updateReason = null;
     private String modified = null;
+    private ObservatoryWeather observatoryWeather = null;
 
     public void setId(int id) {
         this.id = id;
@@ -103,6 +104,13 @@ public class ObservationRecord {
     }
     public String getModified() {
         return modified;
+    }
+
+    public ObservatoryWeather getObservatoryWeather() {
+        return observatoryWeather;
+    }
+    public void setObservatoryWeather(ObservatoryWeather observatoryWeather) {
+        this.observatoryWeather = observatoryWeather;
     }
 
 }
