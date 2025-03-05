@@ -43,7 +43,7 @@ public class MessageDatabase {
         if (dbConnection != null){
             String createUserDB = "create table users (user varchar(25) PRIMARY KEY, password varchar(25) NOT NULL, email varchar(50) NOT NULL, nick varchar(50) NOT NULL)";
             String createWeatherDB = "create table weather (weatherId INTEGER PRIMARY KEY, temperature TEXT, light TEXT, cloudiness TEXT)";
-            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, ownerName varchar(25) NOT NULL, observatory INTEGER(64), updateReason varchar(100), modified varchar(25), weather INTEGER, FOREIGN KEY(observatory) REFERENCES observatory(observatoryID), FOREIGN KEY(ownerName) REFERENCES users(user), FOREIGN KEY(weather) REFERENCES weather(weatherId))";
+            String createMessageDB = "create table messages (recordIdentifier varchar(100) NOT NULL, recordDescription varchar(500) NOT NULL, recordPayload varchar(500) NOT NULL, recordRightAscension varchar(20) NOT NULL, recordDeclination varchar(20) NOT NULL, recordTimeReceived varchar(25) NOT NULL, recordOwner varchar(50) NOT NULL, ownerName varchar(25) NOT NULL, observatory INTEGER(64), updateReason varchar(100), modified varchar(25), weather INTEGER, encryption INTEGER, FOREIGN KEY(observatory) REFERENCES observatory(observatoryID), FOREIGN KEY(ownerName) REFERENCES users(user), FOREIGN KEY(weather) REFERENCES weather(weatherId))";
             String createObservatoryDB = "create table observatory (observatoryId INTEGER PRIMARY KEY, observatoryName varchar(100) NOT NULL, latitude num(20) NOT NULL, longitude num(20) NOT NULL)";
             Statement createStatement = dbConnection.createStatement();
             createStatement.executeUpdate(createUserDB);
@@ -77,20 +77,26 @@ public class MessageDatabase {
         }
     }
 
-    public ArrayList<ObservationRecord> getMessages() throws SQLException{
+    public ArrayList<ObservationRecord> getMessages(String user) throws SQLException{
         ArrayList<ObservationRecord> records = new ArrayList<ObservationRecord>();
-        ObservationRecord record = new ObservationRecord();
         Statement queryStatement = null;
 
-        String statementString = "SELECT rowid, recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, observatory, updateReason, modified, weather FROM messages";
+        String statementString = "SELECT rowid, recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, ownerName, observatory, updateReason, modified, weather, encryption FROM messages";
         queryStatement = dbConnection.createStatement();
         ResultSet results = queryStatement.executeQuery(statementString);
 
         while (results.next()){
+            ObservationRecord record = new ObservationRecord();
             record.setId(results.getInt("rowid"));
             record.setRecordIdentifier(results.getString("recordIdentifier"));
             record.setRecordDescription(results.getString("recordDescription"));
             record.setRecordPayload(results.getString("recordPayload"));
+            if(results.getInt("encryption") != 0){
+                if(results.getString("ownerName").equals(user)){
+                    Shift shift = new Shift(record.getRecordPayload(), results.getInt("encryption"));
+                    record.setRecordPayload(shift.getShift());
+                }
+            }
             record.setRecordRightAscension(results.getString("recordRightAscension"));
             record.setRecordDeclination(results.getString("recordDeclination"));
             record.fetchRecordTimeReceived(results.getString("recordTimeReceived"));
@@ -109,9 +115,9 @@ public class MessageDatabase {
         return records;
     }
 
-    public void insertMessage(ObservationRecord record, String owner) throws SQLException {
-        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, ownerName, observatory, weather) " +
-                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    public void insertMessage(ObservationRecord record, String owner, int shift) throws SQLException {
+        String insertString = "INSERT INTO messages (recordIdentifier, recordDescription, recordPayload, recordRightAscension, recordDeclination, recordTimeReceived, recordOwner, ownerName, observatory, weather, encryption) " +
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try {
             PreparedStatement insertStatement = dbConnection.prepareStatement(insertString);
             insertStatement.setString(1, record.getRecordIdentifier());
@@ -137,6 +143,7 @@ public class MessageDatabase {
                 }
                 insertStatement.setString(10, weatherId);
             } else {insertStatement.setString(10, null);}
+            insertStatement.setInt(11, shift);
             insertStatement.executeUpdate();
             insertStatement.close();
         } catch(Exception e){

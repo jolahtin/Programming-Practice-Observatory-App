@@ -126,8 +126,15 @@ public class Server implements HttpHandler {
 				record.setObservatoryWeather(weather);
 			}
 		}
+		int shift=0;
+		String query = t.getRequestURI().getQuery();
+		if (query != null) {
+			if(query.contains("shift=")){
+				shift = extractShift(t.getRequestURI().getQuery());
+			}	
+		}
 		try {
-			MessageDatabase.getInstance().insertMessage(record, t.getPrincipal().getUsername());
+			MessageDatabase.getInstance().insertMessage(record, t.getPrincipal().getUsername(), shift);
 		} catch (SQLException e) {
 			System.out.println("Couldn't insert message to database!");
 		}
@@ -167,7 +174,7 @@ public class Server implements HttpHandler {
 		ArrayList<ObservationRecord> observationRecords = new ArrayList<ObservationRecord>();
 		JSONArray jsonRecords = new JSONArray();
 		try {
-			observationRecords = MessageDatabase.getInstance().getMessages();
+			observationRecords = MessageDatabase.getInstance().getMessages(t.getPrincipal().getUsername());
 			for(int i=0;i<observationRecords.size();i++){
 				JSONObject recordObject = new JSONObject(observationRecords.get(i));
 				if (observationRecords.get(i).getObservatory() != null){
@@ -246,6 +253,16 @@ public class Server implements HttpHandler {
 		}
 		int id = Integer.parseInt(pair[1]);
 		return id;
+	}
+
+	private int extractShift(String query) throws Exception{
+		String [] pair = query.split("=");
+		if(!pair[0].equals("shift") || pair.length >2){
+			throw new Exception();
+		}
+		String [] shiftparam = pair[1].split("&");
+		int shift = Integer.parseInt(shiftparam[0]);
+		return shift;
 	}
 
 	private void updateRecord(int id, JSONObject input) throws Exception{
