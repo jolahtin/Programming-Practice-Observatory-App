@@ -2,6 +2,9 @@
 
 Student Number: Y########
 
+Weekly excercises returned on time (see tags),
+Features 5, 7, 8 implemented.
+
 ## Introduction
 
 This repository contains the template Java project for the Programming 3 assignment.
